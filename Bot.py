@@ -88,6 +88,10 @@ class Bot:
             task=" ".join(words[2:])
             return self._stack_push(jn, task)
         elif cmd == "pop":
+            try:
+                jn=int(words[1])
+            except:
+                return ("failed to parse stack number", False)
             return self._stack_pop(jn)
         elif cmd == "new":
             dsc=" ".join(words[1:])
