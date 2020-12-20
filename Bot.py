@@ -29,7 +29,7 @@ class Bot:
     def Handle(self, message):
         msg=(None, False)
         if message.content.startswith(".stack"):
-            msg=self._handle_stack(message.content[6:])
+            msg=self._handle_stack(message.content[6:] + " (by " + message.author.name + "#" + message.author.discriminator + ")")
         elif message.content.startswith(".help"):
             msg=(".help - print this help.\n.state - print jobs\n" + self._job_usage() + self._stack_usage(), False)
         elif message.content.startswith(".state"):
