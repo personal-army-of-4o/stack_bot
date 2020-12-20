@@ -30,8 +30,15 @@ class Bot:
 
     def Handle(self, message):
         msg=(None, False)
-        if message.content.startswith(".stack"):
-            msg=self._handle_stack(message.content[6:] + " (by " + message.author.name + "#" + message.author.discriminator + ")")
+        username=self._username(message.author)
+        if message.content.startswith(".stack new"):
+            msg=self._stack_new(message.content[10:], username)
+        elif message.content.startswith(".stack rm"):
+            msg=self._stack_rm(message.content[9:], username)
+        elif message.content.startswith(".stack pop"):
+            msg=self._stack_pop(message.content[10:], username)
+        elif message.content.startswith(".stack push"):
+            msg=self._stack_push(message.content[11:], username)
         elif message.content.startswith(".help"):
             msg=self._print_help()
         elif message.content.startswith(".state"):
@@ -52,6 +59,55 @@ class Bot:
 
 ##################################################################
 # private
+
+    def _username(self, author):
+        return  author.name + "#" + author.discriminator
+
+# stack commands
+
+    def _stack_new(self, arg, username):
+        dsc=arg + " (by " + username + ")"
+        self._state["jobs"].append({"jobname": dsc, "stack": None})
+        return ("ack", True)
+        
+    def _stack_rm(self, arg, username):
+        try:
+            jn=int(arg.split()[0])
+        except:
+            return ("failed to parse stack number", False)
+        if jn < 0 or jn >= len(self._state["jobs"]):
+            return ("nack: invalid stack number", False)
+        if self._state["jobs"][jn]["stack"] != None:
+            return ("nack: stack is not empty", False)
+        self._state["jobs"].pop(jn)
+        return ("ack", True)
+
+    def _stack_pop(self, arg, username):
+        try:
+            jn=int(arg.split()[0])
+        except:
+            return ("failed to parse stack number", False)
+        if self._state["jobs"][jn]["stack"]:
+            self._state["jobs"][jn]["stack"]=self._state["jobs"][jn]["stack"]["prev_task"]
+            return ("ack", True)
+        else:
+            return ("nack: stack empty", False)
+
+    def _stack_push(self, arg, username):
+        words=arg.split()
+        if len(words) < 2:
+            return ("too little args. usage:\n" + self._stack_usage(), False)
+        try:
+            jn=int(words[0])
+        except:
+            return ("failed to parse stack number", False)
+        if jn < 0 or jn > len(self._state["jobs"])-1:
+            return ("invalid stack number", False)
+        task=" ".join(words[1:])  + "(by " + username + ")"
+        self._state["jobs"][jn]["stack"]={"task": task, "prev_task": self._state["jobs"][jn]["stack"]}
+        return ("ack", True)
+
+# other
     
     def _print_help(self):
         return (
@@ -68,65 +124,6 @@ class Bot:
             return indent + stack["task"] + "\n" + self._dump_stack(stack["prev_task"], indent+"    ")
         else:
             return ""
-
-    def _job_add(self, dsc):
-        self._state["jobs"].append({"jobname": dsc, "stack": None})
-        return ("ack", True)
-
-    def _job_rm(self, jn):
-        if jn < 0 or jn >= len(self._state["jobs"]):
-            return ("nack: invalid stack number", False)
-        if self._state["jobs"][jn]["stack"] != None:
-            return ("nack: stack is not empty", False)
-        self._state["jobs"].pop(jn)
-        return ("ack", True)
-
-    def _handle_stack(self, msg):
-        words=msg.split()
-        if len(words) < 2:
-            return ("too little args. usage:\n" + self._stack_usage(), False)
-            
-        cmd=words[0]
-            
-        if cmd == "push":
-            try:
-                jn=int(words[1])
-            except:
-                return ("failed to parse stack number", False)
-            if jn < 0 or jn > len(self._state["jobs"])-1:
-                return ("invalid stack number", False)
-            if len(words) < 3:
-                return (self._stack_usage(), False)
-            task=" ".join(words[2:])
-            return self._stack_push(jn, task)
-        elif cmd == "pop":
-            try:
-                jn=int(words[1])
-            except:
-                return ("failed to parse stack number", False)
-            return self._stack_pop(jn)
-        elif cmd == "new":
-            dsc=" ".join(words[1:])
-            return self._job_add(dsc)
-        elif cmd == "rm":
-            try:
-                jn=int(words[1])
-            except:
-                return ("failed to parse stack number", False)
-            return self._job_rm(jn)
-        else:
-            return ("invalid stack op " + words[0] + ". usage:\n" + self._stack_usage(), False)
-
-    def _stack_push(self, jn, task):
-        self._state["jobs"][jn]["stack"]={"task": task, "prev_task": self._state["jobs"][jn]["stack"]}
-        return ("ack", True)
-
-    def _stack_pop(self, jn):
-        if self._state["jobs"][jn]["stack"]:
-            self._state["jobs"][jn]["stack"]=self._state["jobs"][jn]["stack"]["prev_task"]
-            return ("ack", True)
-        else:
-            return ("nack: stack empty", False)
 
     def _load_state(self):
         with open(self._filename, "r+") as read_file:
