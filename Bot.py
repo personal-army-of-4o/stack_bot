@@ -16,8 +16,7 @@ import os
 
 class Bot:
     def __init__(self, cfg):
-        self._state={}
-        self._state={"jobs": []}
+        self._state=self._default_state()
         self._filename=cfg["state_file_name"]
         try:
             self._load_state()
@@ -126,3 +125,6 @@ class Bot:
     def _dump_state(self):
         with open(self._filename, "w+") as write_file:
             json.dump(self._state, write_file)
+
+    def _default_state(self):
+		return {"jobs": []}
