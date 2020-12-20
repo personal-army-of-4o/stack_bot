@@ -24,7 +24,10 @@ class Bot:
             print("fixing state file")
             self._dump_state()
         self._load_state()
-        
+
+##################################################################
+# public
+
     def Handle(self, message):
         msg=(None, False)
         if message.content.startswith(".stack"):
@@ -46,6 +49,9 @@ class Bot:
         if msg == "":
             msg="empty stack"
         return msg
+
+##################################################################
+# public
 
     def _dump_stack(self, stack, indent):
         if stack:
