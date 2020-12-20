@@ -33,7 +33,7 @@ class Bot:
         if message.content.startswith(".stack"):
             msg=self._handle_stack(message.content[6:] + " (by " + message.author.name + "#" + message.author.discriminator + ")")
         elif message.content.startswith(".help"):
-            msg=(".help - print this help.\n.state - print jobs\n" + self._job_usage() + self._stack_usage(), False)
+            msg=self._print_help()
         elif message.content.startswith(".state"):
             msg=(self.Dump(), False)
         if msg[1]:
@@ -52,6 +52,16 @@ class Bot:
 
 ##################################################################
 # public
+    
+    def _print_help(self):
+        return (
+            (
+                ".help - print this help.\n.state - print jobs\n" + 
+                ".stack new <stack description> - start new stack\n.stack rm <stack number> - remove stack at given number\n" +
+                ".stack push <stack number> <task description> - add task to stack\n.stack pop <stack number> - pop task from stack\n"
+            )
+            , False
+        )    
 
     def _dump_stack(self, stack, indent):
         if stack:
@@ -70,9 +80,6 @@ class Bot:
             return ("nack: stack is not empty", False)
         self._state["jobs"].pop(jn)
         return ("ack", True)
-
-    def _job_usage(self):
-        return ".stack new <stack description> - start new stack\n.stack rm <stack number> - remove stack at given number\n"
 
     def _handle_stack(self, msg):
         words=msg.split()
@@ -110,9 +117,6 @@ class Bot:
         else:
             return ("invalid stack op " + words[0] + ". usage:\n" + self._stack_usage(), False)
 
-    def _stack_usage(self):
-        return ".stack push <stack number> <task description> - add task to stack\n.stack pop <stack number> - pop task from stack\n"
-
     def _stack_push(self, jn, task):
         self._state["jobs"][jn]["stack"]={"task": task, "prev_task": self._state["jobs"][jn]["stack"]}
         return ("ack", True)
@@ -133,4 +137,4 @@ class Bot:
             json.dump(self._state, write_file)
 
     def _default_state(self):
-		return {"jobs": []}
+        return {"jobs": []}
