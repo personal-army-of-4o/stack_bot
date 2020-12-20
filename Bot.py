@@ -51,7 +51,7 @@ class Bot:
         return msg
 
 ##################################################################
-# public
+# private
     
     def _print_help(self):
         return (
